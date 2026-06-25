@@ -85,7 +85,7 @@ rm -r test-folder      # フォルダごと削除
 
 1. PCの WiFi 設定を開く
 2. SSID: **`shuhari`** を選択
-3. パスワード: **`MLYtrcWZmHN8`**
+3. パスワード: **すでにお伝え済み**
 
 ### 2.3 接続の確認
 
