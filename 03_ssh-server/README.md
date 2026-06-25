@@ -168,13 +168,16 @@ Other []:                ← 空Enter
 Is the information correct? [Y/n]   ← Y
 ```
 
-### 4.2 sudo 権限の付与（必要に応じて）
+### 4.2 sudo 権限・Docker 権限の付与（必要に応じて）
 
-作成したアカウントに管理者権限を付与する場合：
+作成したアカウントに管理者権限と Docker 実行権限を付与する場合：
 
 ```bash
 sudo usermod -aG sudo 自分のユーザー名
+sudo usermod -aG docker 自分のユーザー名
 ```
+
+> 💡 **docker グループ**に追加すると、`sudo` なしで `docker` コマンドを実行できるようになります（第6回で使います）。
 
 ### 4.3 アカウント作成の確認
 
@@ -184,7 +187,7 @@ id 自分のユーザー名
 
 **期待される出力（例）：**
 ```
-uid=1001(tanaka) gid=1001(tanaka) groups=1001(tanaka),27(sudo)
+uid=1001(tanaka) gid=1001(tanaka) groups=1001(tanaka),27(sudo),999(docker)
 ```
 
 ### 4.4 admin からログアウト
