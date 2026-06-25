@@ -427,7 +427,8 @@ VS Code 内で `Ctrl + `` ` → サーバー上のターミナルが開く
 | `Permission denied (publickey)` | 鍵が正しく登録されていない | ステップ7を再確認、authorized_keys の内容を確認 |
 | `Connection timed out` | ネットワーク外からアクセスしている | C208の WiFi に接続しているか確認 |
 | `Host key verification failed` | サーバーの鍵が変わった | `ssh-keygen -R 192.168.50.218` で古い鍵を削除 |
-| `adduser: command not found` | admin に sudo 権限がない場合 | 先生に連絡 |
+| `adduser: command not found` | `adduser` が未インストール（最小構成のLinux） | `sudo useradd -m 自分のユーザー名` を試す、または先生に連絡 |
+| `user is not in the sudoers file` | admin に sudo 権限がない | 先生に連絡 |
 | `ssh-copy-id: command not found` | Windows で使えない場合がある | 方法B（手動登録）を使う |
 
 ---
