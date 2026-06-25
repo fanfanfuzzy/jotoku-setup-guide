@@ -84,7 +84,7 @@ rm -r test-folder      # フォルダごと削除
 ### 2.2 WiFi に接続する
 
 1. PCの WiFi 設定を開く
-2. SSID: **`admin`** を選択
+2. SSID: **`shuhari`** を選択
 3. パスワード: **C208 の DGX-Spark 本体に貼ってある付箋を確認してください**
 
 > ⚠️ **注意**: WiFi パスワードはセキュリティのため、このドキュメントには記載していません。C208 教室内の DGX-Spark（情報特別演習用）本体に付箋で貼ってありますので、現地で確認してください。
@@ -110,7 +110,7 @@ PING 192.168.50.218: 64 bytes from 192.168.50.218: icmp_seq=0 time=2.1 ms
 
 ## ステップ 3：admin アカウントで SSH 接続する
 
-最初は共有の admin アカウントを使ってサーバーにログインします。
+最初は共有の **admin** アカウント（DGX-Sparkの管理者アカウント）を使ってサーバーにログインします。
 
 ### 3.1 SSH 接続
 
@@ -382,7 +382,7 @@ VS Code 内で `Ctrl + `` ` → サーバー上のターミナルが開く
 ## 全体の流れまとめ
 
 ```
-1. C208 で WiFi (admin) に接続
+1. C208 で WiFi (shuhari) に接続
        ↓
 2. ssh admin@192.168.50.218 でサーバーにログイン
        ↓
@@ -405,7 +405,7 @@ VS Code 内で `Ctrl + `` ` → サーバー上のターミナルが開く
 
 ## 確認チェックリスト
 
-- [ ] C208 の WiFi (SSID: admin) に接続した
+- [ ] C208 の WiFi (SSID: shuhari) に接続した
 - [ ] `ping 192.168.50.218` で応答がある
 - [ ] admin アカウントで SSH ログインできた
 - [ ] `sudo adduser` で自分のアカウントを作成した
@@ -421,7 +421,7 @@ VS Code 内で `Ctrl + `` ` → サーバー上のターミナルが開く
 
 | エラー | 原因 | 対処 |
 |--------|------|------|
-| `ping: Request timeout` | WiFi に接続していない or 接続先が違う | SSID が `admin` になっているか確認 |
+| `ping: Request timeout` | WiFi に接続していない or 接続先が違う | SSID が `shuhari` になっているか確認 |
 | `Connection refused` | サーバーのSSHサービスが起動していない | 先生に連絡 |
 | `Permission denied (password)` | パスワードが間違い | 大文字小文字に注意して再入力 |
 | `Permission denied (publickey)` | 鍵が正しく登録されていない | ステップ7を再確認、authorized_keys の内容を確認 |
