@@ -334,13 +334,18 @@ __pycache__/
 
 ---
 
-## 演習：実践タスク
+## 演習：基盤モデル実践（選択式）
 
-Docker の基本を理解したら、実際のモデルを Docker 環境で動かしてみましょう：
+Docker の基本を理解したら、実際の基盤モデルを Docker 環境で動かしてみましょう。  
+**以下から自分の研究テーマに近いものを1つ以上選んでください：**
 
-| 演習 | テーマ | 内容 |
-|------|--------|------|
-| [SAM で画像領域分割](./exercise-sam-segmentation.md) | Segment Anything Model | 公式Docker環境でSAM2を動かし、画像セグメンテーション |
+| 演習 | テーマ | 分野 | 内容 |
+|------|--------|------|------|
+| [SAM で画像領域分割](./exercise-sam-segmentation.md) | Segment Anything Model | 画像（セグメンテーション） | 公式Docker環境でSAM2を動かし、点やボックスで物体を切り出す |
+| [Qwen VLM で画像理解](./exercise-qwen-vlm.md) | Qwen2.5-VL | 画像+言語（VLM） | 画像を入力して自然言語で説明・分析させる |
+| [音声ノイズ除去](./exercise-audio-denoising.md) | Demucs (Meta) | 音声処理 | ノイズ入り音声をクリーンにする＋ファインチューニング体験 |
+
+> 💡 どの演習も共通して「**Docker環境構築 → 公式モデル導入 → タスク実行**」のパターンを学びます。
 
 ---
 
