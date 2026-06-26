@@ -343,6 +343,9 @@ python simple_nn.py
 - [ ] `torch.cuda.is_available()` が `True` を返した
 - [ ] `gpu_test.py` を実行して CPU と GPU の速度差を確認した
 - [ ] `simple_nn.py` を実行してニューラルネットワークが学習できた
+- [ ] 演習1：二値分類が正しく動作した
+- [ ] 演習2：多値分類が正しく動作した
+- [ ] 演習3：MNISTの深層学習でテスト精度97%以上を達成した
 
 ---
 
@@ -354,6 +357,32 @@ python simple_nn.py
 | `CUDA out of memory` | GPUメモリ不足 | バッチサイズを小さくする / 他のプロセスを確認 |
 | `ModuleNotFoundError` | ライブラリ未インストール | `pip install ライブラリ名` |
 | `(.venv)` が表示されない | 仮想環境が有効化されていない | `source .venv/bin/activate` |
+
+---
+
+---
+
+## 分類演習（ステップ 8〜10）
+
+ステップ 7 までで PyTorch の基本を学びました。ここからは、実際の分類問題に取り組みます。
+
+| 演習 | テーマ | 内容 |
+|------|--------|------|
+| [演習1](./exercise-01_binary-classification.md) | 二値分類 | Iris 2クラス、シグモイド関数、BCELoss |
+| [演習2](./exercise-02_multi-classification.md) | 多値分類 | Iris 3クラス、Softmax、CrossEntropyLoss |
+| [演習3](./exercise-03_deep-learning.md) | 深層学習 | MNIST手書き数字、多層NN、ミニバッチ学習 |
+
+### 学習の流れ
+
+```
+ステップ 7: y=2x+1 を学習（回帰）
+    ↓ 「予測値が数値」から「予測値がクラス」へ
+演習1: 二値分類（2択: setosa か versicolor か）
+    ↓ 「2クラス」から「3クラス以上」へ
+演習2: 多値分類（3択: setosa / versicolor / virginica）
+    ↓ 「浅いモデル」から「深いモデル」へ
+演習3: 深層学習（MNIST 手書き数字認識、隠れ層あり）
+```
 
 ---
 
