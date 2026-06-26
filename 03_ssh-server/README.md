@@ -380,6 +380,56 @@ VS Code 内で `Ctrl + `` ` → サーバー上のターミナルが開く
 
 ---
 
+## ステップ 10：サーバー上でリポジトリを clone する
+
+SSH 接続ができたら、最初の作業としてこのガイドのリポジトリを DGX-Spark 上に取得してみましょう。
+
+### 10.1 git clone を実行
+
+DGX-Spark にログインした状態で：
+
+```bash
+git clone https://github.com/fanfanfuzzy/jotoku-setup-guide.git
+```
+
+**出力：**
+```
+Cloning into 'jotoku-setup-guide'...
+remote: Enumerating objects: ...
+remote: Counting objects: 100% ...
+Receiving objects: 100% ...
+done.
+```
+
+### 10.2 中身を確認
+
+```bash
+cd jotoku-setup-guide
+ls
+```
+
+**出力：**
+```
+01_pc-setup-and-colab/  03_ssh-server/          05_experiment-management/  README.md
+02_git-basics/          04_python-on-server/    06_docker-intro/
+```
+
+> 💡 **ポイント**: `git clone` は GitHub 上のリポジトリをまるごとコピーするコマンドです。第4回以降の演習ファイルもここに入っているので、サーバー上で直接参照できます。
+
+### 10.3 自分のPCでも clone する
+
+自宅のPCや教室の自分のPCでも同様に clone できます：
+
+```bash
+# 自分のPCのターミナルで（VS Codeのターミナルでも可）
+git clone https://github.com/fanfanfuzzy/jotoku-setup-guide.git
+cd jotoku-setup-guide
+```
+
+サーバー上とPC上の両方にコードがある状態にしておくと、Colab で試したコードをサーバーで実行する際にも便利です。
+
+---
+
 ## 全体の流れまとめ
 
 ```
@@ -400,6 +450,8 @@ VS Code 内で `Ctrl + `` ` → サーバー上のターミナルが開く
 8. ~/.ssh/config を設定 → ssh spark-jotoku で接続
        ↓
 9. VS Code Remote-SSH で快適に開発
+       ↓
+10. git clone でリポジトリを取得
 ```
 
 ---
@@ -415,6 +467,7 @@ VS Code 内で `Ctrl + `` ` → サーバー上のターミナルが開く
 - [ ] 公開鍵をサーバーに登録した
 - [ ] パスワードなしで `ssh spark-jotoku` で接続できる
 - [ ] VS Code Remote-SSH でサーバーに接続できる
+- [ ] `git clone` でリポジトリを DGX-Spark 上に取得できた
 
 ---
 
