@@ -11,6 +11,7 @@
 - [x] 既存の Docker イメージを使う
 - [x] 自分で Dockerfile を書いてイメージをビルドする
 - [x] コンテナ内で GPU を使う
+- [x] 実践：SAM（Segment Anything Model）を Docker で動かす
 
 ---
 
@@ -326,16 +327,26 @@ __pycache__/
 | 第2回 | Git基本 | `git add`, `git commit`, `git push` |
 | 第3回 | SSH接続 | `ssh`, VS Code Remote-SSH |
 | 第4回 | GPU計算 | `nvidia-smi`, `torch.cuda` |
-| 第5回 | 実験管理 | `tmux`, `.gitignore`, ログ保存 |
-| 第6回 | Docker | `docker build`, `docker run` |
+| 第5回 | 実験管理 | `tmux`, `.gitignore`, ログ保存, W&B |
+| 第6回 | Docker | `docker build`, `docker run`, SAM演習 |
 
 これで「**調査 → 実装 → 実行 → 評価 → まとめ**」に必要な基本ツールが揃いました！
 
 ---
 
+## 演習：実践タスク
+
+Docker の基本を理解したら、実際のモデルを Docker 環境で動かしてみましょう：
+
+| 演習 | テーマ | 内容 |
+|------|--------|------|
+| [SAM で画像領域分割](./exercise-sam-segmentation.md) | Segment Anything Model | 公式Docker環境でSAM2を動かし、画像セグメンテーション |
+
+---
+
 ## 次のステップ（発展）
 
-- **Weights & Biases (W&B)**: 実験の追跡・可視化ツール
+- **Weights & Biases (W&B)**: 実験の追跡・可視化ツール（第5回で紹介）
 - **GitHub Actions**: 自動テスト・自動ビルド
 - **VS Code Dev Containers**: Docker + VS Code の統合開発
 - **Hydra / MLflow**: 実験設定と結果の管理フレームワーク

@@ -11,8 +11,8 @@
 | 第2回 | [Gitの基本](./02_git-basics/README.md) | git init/add/commit、GitHubにpush、VS CodeのGit機能 |
 | 第3回 | [SSHでサーバー接続](./03_ssh-server/README.md) | ターミナル基本操作、SSH鍵、VS Code Remote-SSH |
 | 第4回 | [サーバー上でPythonを動かす](./04_python-on-server/README.md) | 仮想環境、pip、GPU確認、分類演習 |
-| 第5回 | [実験の実行と管理](./05_experiment-management/README.md) | バックグラウンド実行、結果整理、Git管理 |
-| 第6回 | [Docker入門](./06_docker-intro/README.md) | コンテナの概念、Dockerfile作成 |
+| 第5回 | [実験の実行と管理](./05_experiment-management/README.md) | バックグラウンド実行、結果整理、Git管理、W&B |
+| 第6回 | [Docker入門](./06_docker-intro/README.md) | コンテナの概念、Dockerfile作成、SAM実践演習 |
 
 ## ColabとVS Codeの使い分け
 
