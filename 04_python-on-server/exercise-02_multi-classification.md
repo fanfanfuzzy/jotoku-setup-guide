@@ -301,6 +301,25 @@ CrossEntropyLoss = Softmax + NegativeLogLikelihood
 
 ---
 
+## Google Colab で実行する場合
+
+自宅など DGX-Spark に接続できない環境では、Google Colab で同じコードを実行できます。
+
+1. [Google Colab](https://colab.research.google.com/) を開く
+2. 「新しいノートブック」を作成
+3. ランタイム → 「ランタイムのタイプを変更」→ **GPU** を選択
+4. セルに以下を入力して実行：
+
+```python
+!pip install scikit-learn matplotlib
+```
+
+5. 次のセルに上記のスクリプト全体をコピー＆ペーストして実行
+
+> 💡 Colab では `device` が自動的に `cuda` になります。GPU無料枠が使えない場合は `cpu` でも動作します（Irisデータは小さいので速度差はほぼありません）。
+
+---
+
 ## チャレンジ課題（余裕があれば）
 
 1. 4つの特徴量すべてを使うとテスト精度はどう変わるか

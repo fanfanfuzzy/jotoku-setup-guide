@@ -239,8 +239,27 @@ PyTorch テンソル
 
 ---
 
+## Google Colab で実行する場合
+
+自宅など DGX-Spark に接続できない環境では、Google Colab で同じコードを実行できます。
+
+1. [Google Colab](https://colab.research.google.com/) を開く
+2. 「新しいノートブック」を作成
+3. ランタイム → 「ランタイムのタイプを変更」→ **GPU** を選択
+4. セルに以下を入力して実行：
+
+```python
+!pip install scikit-learn matplotlib
+```
+
+5. 次のセルに上記のスクリプト全体をコピー＆ペーストして実行
+
+> 💡 Colab では `device` が自動的に `cuda` になります。GPU無料枠が使えない場合は `cpu` でも動作します（速度差はこの規模では気になりません）。
+
+---
+
 ## チャレンジ課題（余裕があれば）
 
 1. 学習率 `lr` を変えると結果がどう変わるか試してみよう（0.01, 0.1, 1.0）
 2. 特徴量を4つ全て使うとどうなるか（`iris.data[:100, :4]` にして `nn.Linear(4, 1)`）
-3. `nn.SGD` を `nn.Adam` に変えると学習はどう変わるか
+3. `optim.SGD` を `optim.Adam` に変えると学習はどう変わるか
