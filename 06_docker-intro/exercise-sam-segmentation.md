@@ -309,7 +309,13 @@ scp spark-jotoku:~/sam-docker-exercise/results/*.png ./
 
 ## ステップ 8：docker compose で管理する
 
-繰り返し実行するなら `docker-compose.yml` が便利：
+繰り返し実行するなら `docker-compose.yml` が便利です。まず、ステップ5で作成した `run_sam.py` をホスト側にも保存しておきます：
+
+```bash
+# ホスト側で run_sam.py を保存（ステップ5の内容をファイルに書き出す）
+# ※ コンテナ内で作成したスクリプトはコンテナを削除すると消えるため、
+#   ホスト側にも保存して volume マウントで使えるようにする
+```
 
 ```yaml
 # docker-compose.yml
@@ -322,6 +328,7 @@ services:
     volumes:
       - ./images:/workspace/images
       - ./results:/workspace/results
+      - ./run_sam.py:/workspace/run_sam.py
     command: bash -c "cd /workspace/sam2 && python /workspace/run_sam.py"
 ```
 
