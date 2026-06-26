@@ -79,7 +79,7 @@ RUN apt-get update && apt-get install -y \
 
 # Qwen2.5-VL に必要なライブラリ
 RUN pip install --no-cache-dir \
-    transformers>=4.45.0 \
+    "transformers>=4.45.0" \
     accelerate \
     qwen-vl-utils \
     pillow \

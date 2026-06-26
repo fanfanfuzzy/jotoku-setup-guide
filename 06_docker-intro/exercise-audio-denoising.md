@@ -435,6 +435,11 @@ import torchaudio
 clean, sr = torchaudio.load("/workspace/audio/clean/sample_clean.wav")
 denoised, _ = torchaudio.load("/workspace/results/denoised_dns48.wav")
 
+# 長さを揃える（モデル処理で微妙に長さが変わる場合がある）
+min_len = min(clean.shape[1], denoised.shape[1])
+clean = clean[:, :min_len]
+denoised = denoised[:, :min_len]
+
 # PESQ（音声品質）: -0.5 ~ 4.5（高いほど良い）
 pesq_score = pesq(sr, clean.squeeze().numpy(), denoised.squeeze().numpy(), "wb")
 print(f"PESQ: {pesq_score:.3f}")
