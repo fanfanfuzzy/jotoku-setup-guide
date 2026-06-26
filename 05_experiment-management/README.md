@@ -10,6 +10,7 @@
 - [x] 長時間実行のジョブを安全に動かす
 - [x] 実行中のプロセスを確認・停止する
 - [x] 実験結果を整理して Git で管理する
+- [x] Weights & Biases (W&B) で実験を記録・可視化する
 
 ---
 
@@ -268,6 +269,203 @@ fix: データ前処理のバグ修正（正規化の順序）
 
 ---
 
+## ステップ 7：Weights & Biases (W&B) で実験を記録する
+
+### 7.1 W&B とは
+
+**Weights & Biases (W&B)** は、機械学習の実験を自動的に記録・可視化するプラットフォームです。
+
+```
+従来の方法:
+  print(f"epoch={e}, loss={loss}")  → ターミナルのログに埋もれる
+  json.dump(metrics, f)            → ファイルを手動で比較
+
+W&B を使うと:
+  wandb.log({"loss": loss})        → 自動でグラフ化、ブラウザで確認
+```
+
+### 7.2 なぜ W&B を使うのか
+
+| 目的 | 手動管理 | W&B |
+|------|----------|-----|
+| 学習曲線の確認 | matplotlib で毎回描画 | リアルタイムでブラウザに表示 |
+| ハイパーパラメータ比較 | 表を手動作成 | 自動で比較テーブル生成 |
+| 実験の再現 | 「あの設定なんだっけ…」 | 全設定が自動保存 |
+| チーム共有 | ファイルを送り合う | URLを共有するだけ |
+| GPU使用率の監視 | `nvidia-smi` を別ターミナルで実行 | 自動でシステムメトリクス記録 |
+
+> 💡 **ポイント**: W&B は「実験ノート」をクラウドに自動保存してくれるツールです。無料プランで個人利用には十分です。
+
+### 7.3 セットアップ
+
+#### インストール
+
+```bash
+# venv が有効な状態で
+pip install wandb
+```
+
+#### アカウント作成とログイン
+
+1. https://wandb.ai/site にアクセスしてアカウント作成（GitHub連携が楽）
+2. ターミナルでログイン：
+
+```bash
+wandb login
+```
+
+API キーの入力を求められるので、https://wandb.ai/authorize からコピーして貼り付けます。
+
+> ⚠️ **注意**: API キーは他人に見せないこと。`.netrc` に自動保存されるので、毎回入力する必要はありません。
+
+### 7.4 PyTorch の学習ループに組み込む
+
+第4回の演習3（MNIST深層学習）に W&B を追加した例：
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+from sklearn.datasets import fetch_openml
+from sklearn.model_selection import train_test_split
+import numpy as np
+import wandb
+
+# W&B の初期化
+wandb.init(
+    project="jotoku-mnist",        # プロジェクト名
+    name="exp01-baseline",         # この実験の名前
+    config={                       # ハイパーパラメータを記録
+        "learning_rate": 0.001,
+        "epochs": 20,
+        "batch_size": 256,
+        "hidden_sizes": [256, 128],
+        "optimizer": "Adam",
+    }
+)
+config = wandb.config  # 設定を変数として使える
+
+# デバイス設定
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Device: {device}")
+
+# データ準備（省略：演習3と同じ）
+# ...
+
+# モデル定義
+class DeepNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.network = nn.Sequential(
+            nn.Linear(784, config.hidden_sizes[0]),
+            nn.ReLU(),
+            nn.Linear(config.hidden_sizes[0], config.hidden_sizes[1]),
+            nn.ReLU(),
+            nn.Linear(config.hidden_sizes[1], 10)
+        )
+
+    def forward(self, x):
+        return self.network(x)
+
+model = DeepNN().to(device)
+optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
+loss_fn = nn.CrossEntropyLoss()
+
+# W&B でモデル構造を監視
+wandb.watch(model, log="all", log_freq=100)
+
+# 学習ループ
+for epoch in range(config.epochs):
+    model.train()
+    epoch_loss = 0
+    correct = 0
+    total = 0
+
+    for batch_x, batch_y in train_loader:
+        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+
+        outputs = model(batch_x)
+        loss = loss_fn(outputs, batch_y)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        epoch_loss += loss.item()
+        _, predicted = torch.max(outputs, 1)
+        correct += (predicted == batch_y).sum().item()
+        total += batch_y.size(0)
+
+    train_acc = correct / total
+
+    # W&B にログ送信（これだけで自動グラフ化）
+    wandb.log({
+        "epoch": epoch,
+        "train_loss": epoch_loss / len(train_loader),
+        "train_accuracy": train_acc,
+    })
+
+    print(f"Epoch {epoch+1}/{config.epochs} - Loss: {epoch_loss/len(train_loader):.4f}, Acc: {train_acc:.4f}")
+
+# テスト精度を記録
+model.eval()
+# ... テスト評価 ...
+wandb.log({"test_accuracy": test_acc})
+
+# 実験を終了
+wandb.finish()
+```
+
+### 7.5 ダッシュボードの見方
+
+`wandb.init()` を実行すると、ターミナルに URL が表示されます：
+
+```
+wandb: Syncing run exp01-baseline
+wandb: ⭐️ View project at https://wandb.ai/あなたのユーザー名/jotoku-mnist
+wandb: 🚀 View run at https://wandb.ai/あなたのユーザー名/jotoku-mnist/runs/xxxxx
+```
+
+ブラウザで開くと：
+
+| タブ | 内容 |
+|------|------|
+| **Charts** | loss、accuracy などのグラフ（リアルタイム更新） |
+| **System** | GPU使用率、メモリ使用量、CPU使用率 |
+| **Logs** | print文の出力 |
+| **Files** | 保存したファイル（モデル等） |
+| **Config** | ハイパーパラメータ一覧 |
+
+### 7.6 実験を比較する
+
+複数の実験を実行した後、W&B のプロジェクトページで：
+
+1. 実験を複数選択
+2. 「Compare」ボタンをクリック
+3. 設定の違いと結果の違いが一目で分かる
+
+例：
+```
+| Run          | lr    | hidden  | test_acc |
+|--------------|-------|---------|----------|
+| exp01-base   | 0.001 | [256,128] | 97.1%  |
+| exp02-small  | 0.001 | [128,64]  | 95.8%  |
+| exp03-fast   | 0.01  | [256,128] | 96.5%  |
+```
+
+### 7.7 Colab で W&B を使う場合
+
+```python
+!pip install wandb
+import wandb
+wandb.login()  # API キーを入力
+```
+
+> 💡 Colab でも DGX-Spark でも同じ `wandb.init(project="...")` を使えば、同じプロジェクトに実験が蓄積されます。
+
+---
+
 ## 確認チェックリスト
 
 - [ ] `tmux new -s test` でセッションを作成できた
@@ -277,6 +475,9 @@ fix: データ前処理のバグ修正（正規化の順序）
 - [ ] `nvidia-smi` で GPU 使用状況を確認できた
 - [ ] `.gitignore` を作成して不要ファイルを除外できた
 - [ ] 実験結果をディレクトリに整理して保存できた
+- [ ] W&B にログインできた（`wandb login`）
+- [ ] 学習ループに `wandb.log()` を追加して実験を記録できた
+- [ ] W&B ダッシュボードでグラフを確認できた
 
 ---
 
