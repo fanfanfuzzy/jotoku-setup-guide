@@ -71,7 +71,7 @@ mkdir -p audio/noisy audio/clean results
 
 ```dockerfile
 # Dockerfile
-# arm64 (DGX-Spark) 対応の NGC PyTorch イメージ。torch / torchvision / torchaudio 同梱
+# arm64 (DGX-Spark) 対応の NGC PyTorch イメージ。torch / torchvision 同梱（torchaudio は後でビルド）
 # ※ pytorch/pytorch:... は amd64 専用なので DGX-Spark では exec format error になる
 FROM nvcr.io/nvidia/pytorch:25.09-py3
 
@@ -86,21 +86,37 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
+# torchaudio を NGC の torch に合わせてソースからビルド（約 3〜5 分）
+# ※ PyPI の torchaudio は NGC の torch (2.9.0a0) と ABI が合わず import できない
+RUN pip install --no-cache-dir --no-build-isolation --no-deps \
+    "git+https://github.com/pytorch/audio.git@v2.9.0"
+
 # denoiser（Meta公式）のインストール
+# ※ --no-deps で torch / torchaudio を PyPI 版で上書きさせない。依存は次の RUN で入れる
 RUN git clone https://github.com/facebookresearch/denoiser.git /workspace/denoiser \
     && cd /workspace/denoiser \
-    && pip install --no-cache-dir -e .
+    && pip install --no-cache-dir --no-deps -e .
 
-# 追加ライブラリ
+# denoiser の依存 + 追加ライブラリ（音声ファイルの読み書きは soundfile を使う）
 RUN pip install --no-cache-dir \
+    hydra-core==0.11.3 \
+    hydra_colorlog==0.1.4 \
+    julius \
+    sounddevice \
     soundfile \
     matplotlib \
     numpy \
     pesq \
     pystoi
 
+# 動作確認（torch が NGC 版のままで torchaudio / denoiser が import できること）
+RUN python -c "import torch, torchaudio, denoiser.pretrained; print(torch.__version__, torchaudio.__version__)"
+
 CMD ["bash"]
 ```
+
+> 💡 NGC イメージには torchaudio が入っておらず、PyPI 版は NGC の torch と互換性がないためソースからビルドしています。  
+> また torchaudio 2.9 の `load` / `save` は別ライブラリ (torchcodec) が必要になったため、この演習では音声ファイルの読み書きに `soundfile` を使います。
 
 ---
 
@@ -130,8 +146,12 @@ docker run --gpus all -it \
 ```python
 # generate_test_audio.py — テスト用のノイズ入り音声を生成
 import torch
-import torchaudio
 import numpy as np
+import soundfile as sf
+
+def save_wav(path, wav, sr):
+    """wav: (channels, samples) の Tensor を WAV に保存"""
+    sf.write(path, wav.detach().cpu().numpy().T, sr)
 
 # サンプリングレート
 sr = 16000
@@ -149,8 +169,8 @@ noise = 0.1 * torch.randn_like(clean)
 noisy = clean + noise
 
 # 保存
-torchaudio.save("/workspace/audio/clean/sample_clean.wav", clean, sr)
-torchaudio.save("/workspace/audio/noisy/sample_noisy.wav", noisy, sr)
+save_wav("/workspace/audio/clean/sample_clean.wav", clean, sr)
+save_wav("/workspace/audio/noisy/sample_noisy.wav", noisy, sr)
 print(f"クリーン音声: /workspace/audio/clean/sample_clean.wav")
 print(f"ノイズ音声:   /workspace/audio/noisy/sample_noisy.wav")
 print(f"サンプリングレート: {sr} Hz, 長さ: {duration} 秒")
@@ -169,9 +189,17 @@ python generate_test_audio.py
 ```python
 # run_denoise.py — 事前学習済み dns48 でノイズ除去
 import torch
-import torchaudio
+import soundfile as sf
 from denoiser import pretrained
 from denoiser.dsp import convert_audio
+
+def load_wav(path):
+    """WAV を (channels, samples) の float32 Tensor として読み込む"""
+    data, sr = sf.read(path, dtype="float32", always_2d=True)
+    return torch.from_numpy(data.T), sr
+
+def save_wav(path, wav, sr):
+    sf.write(path, wav.detach().cpu().numpy().T, sr)
 
 print("=" * 50)
 print("Demucs 音声ノイズ除去デモ")
@@ -190,7 +218,7 @@ else:
 # ノイズ入り音声の読み込み
 print("\n[2/3] 音声ファイルを読み込み中...")
 noisy_path = "/workspace/audio/noisy/sample_noisy.wav"
-wav, sr = torchaudio.load(noisy_path)
+wav, sr = load_wav(noisy_path)
 print(f"  → ファイル: {noisy_path}")
 print(f"  → サンプリングレート: {sr} Hz")
 print(f"  → 長さ: {wav.shape[1] / sr:.2f} 秒")
@@ -207,7 +235,7 @@ with torch.no_grad():
 
 # 結果の保存
 output_path = "/workspace/results/denoised_dns48.wav"
-torchaudio.save(output_path, denoised.cpu(), model.sample_rate)
+save_wav(output_path, denoised, model.sample_rate)
 print(f"\n結果を保存: {output_path}")
 print("=" * 50)
 print("完了！ noisy → denoised の音声を比較してみてください。")
@@ -228,7 +256,6 @@ python run_denoise.py
 ```python
 # train_denoise.py — 小規模データでファインチューニング
 import torch
-import torchaudio
 import numpy as np
 from denoiser import pretrained
 from denoiser.dsp import convert_audio
@@ -430,11 +457,16 @@ python -m denoiser.audio dataset=valentini
 ```python
 from pesq import pesq
 from pystoi import stoi
-import torchaudio
+import torch
+import soundfile as sf
+
+def load_wav(path):
+    data, sr = sf.read(path, dtype="float32", always_2d=True)
+    return torch.from_numpy(data.T), sr
 
 # クリーン音声と処理後音声を読み込み
-clean, sr = torchaudio.load("/workspace/audio/clean/sample_clean.wav")
-denoised, _ = torchaudio.load("/workspace/results/denoised_dns48.wav")
+clean, sr = load_wav("/workspace/audio/clean/sample_clean.wav")
+denoised, _ = load_wav("/workspace/results/denoised_dns48.wav")
 
 # 長さを揃える（モデル処理で微妙に長さが変わる場合がある）
 min_len = min(clean.shape[1], denoised.shape[1])
@@ -511,4 +543,4 @@ WavLM（自己教師あり事前学習）
 | 事前学習済みモデルの利用 | `pretrained.dns48()` |
 | ファインチューニング | optimizer, loss, 学習ループ |
 | 音質評価 | PESQ, STOI |
-| Docker での音声処理環境 | sox, ffmpeg, torchaudio |
+| Docker での音声処理環境 | sox, ffmpeg, torchaudio, soundfile |
