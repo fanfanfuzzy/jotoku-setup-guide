@@ -67,7 +67,9 @@ mkdir -p images results
 
 ```dockerfile
 # Dockerfile
-FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+# arm64 (DGX-Spark) 対応の NGC PyTorch イメージ。torch / torchvision / torchaudio 同梱
+# ※ pytorch/pytorch:... は amd64 専用なので DGX-Spark では exec format error になる
+FROM nvcr.io/nvidia/pytorch:25.09-py3
 
 WORKDIR /workspace
 
@@ -82,8 +84,7 @@ RUN pip install --no-cache-dir \
     "transformers>=4.45.0" \
     accelerate \
     qwen-vl-utils \
-    pillow \
-    torchvision
+    pillow
 
 # モデルは初回実行時に自動ダウンロードされる（HuggingFace cache）
 # 事前にダウンロードしたい場合は以下を有効化：

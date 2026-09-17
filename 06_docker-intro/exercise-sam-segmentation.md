@@ -40,7 +40,9 @@ mkdir -p ~/sam-docker-exercise && cd ~/sam-docker-exercise
 
 ```dockerfile
 # Dockerfile
-FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+# arm64 (DGX-Spark) 対応の NGC PyTorch イメージ。torch / torchvision / torchaudio 同梱
+# ※ pytorch/pytorch:... は amd64 専用なので DGX-Spark では exec format error になる
+FROM nvcr.io/nvidia/pytorch:25.09-py3
 
 WORKDIR /workspace
 
@@ -48,7 +50,7 @@ WORKDIR /workspace
 RUN apt-get update && apt-get install -y \
     git \
     wget \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 

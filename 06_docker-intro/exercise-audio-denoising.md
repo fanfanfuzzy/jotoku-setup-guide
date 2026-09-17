@@ -71,7 +71,9 @@ mkdir -p audio/noisy audio/clean results
 
 ```dockerfile
 # Dockerfile
-FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+# arm64 (DGX-Spark) 対応の NGC PyTorch イメージ。torch / torchvision / torchaudio 同梱
+# ※ pytorch/pytorch:... は amd64 専用なので DGX-Spark では exec format error になる
+FROM nvcr.io/nvidia/pytorch:25.09-py3
 
 WORKDIR /workspace
 
@@ -91,7 +93,6 @@ RUN git clone https://github.com/facebookresearch/denoiser.git /workspace/denois
 
 # 追加ライブラリ
 RUN pip install --no-cache-dir \
-    torchaudio \
     soundfile \
     matplotlib \
     numpy \
