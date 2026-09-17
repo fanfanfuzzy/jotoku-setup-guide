@@ -74,10 +74,29 @@ Docker version 24.x.x, build ...
 
 GPU 対応の確認：
 ```bash
-nvidia-docker --version
-# または
-docker run --rm --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi
+docker run --rm --gpus all nvidia/cuda:13.0.0-base-ubuntu24.04 nvidia-smi
 ```
+
+### 2.2 サーバーの CPU アーキテクチャを確認する（重要）
+
+```bash
+uname -m
+```
+
+| 出力 | 意味 |
+|------|------|
+| `x86_64` | 一般的な PC / サーバー（amd64） |
+| `aarch64` | **DGX-Spark (spark-jotoku)** はこちら（arm64） |
+
+> ⚠️ **DGX-Spark は ARM64 (aarch64) + GB10 GPU + CUDA 13 です。**  
+> Docker Hub の `pytorch/pytorch:*` 公式イメージは **amd64 専用**なので、DGX-Spark で使うと
+> ```
+> WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8)
+> exec /usr/bin/bash: exec format error
+> ```
+> というエラーになり起動できません。  
+> この回では、arm64 と GB10（Blackwell）の両方に対応した **NVIDIA NGC の PyTorch イメージ** `nvcr.io/nvidia/pytorch:25.09-py3` を使います（`pytorch/pytorch:...` の代わり）。  
+> 以下の手順は DGX-Spark 前提で書いてあります。x86_64 のサーバーでも同じイメージがそのまま使えます。
 
 ---
 
@@ -86,14 +105,17 @@ docker run --rm --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi
 ### 3.1 イメージの取得と実行
 
 ```bash
-# PyTorchの公式イメージを使う
-docker run -it --gpus all pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime bash
+# NVIDIA NGC の PyTorch イメージを使う（arm64 / x86_64 両対応、GB10 対応）
+# ※ 初回は数 GB のダウンロードがあるので数分かかります
+docker run -it --gpus all nvcr.io/nvidia/pytorch:25.09-py3 bash
 ```
+
+> 💡 `pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime` のような Docker Hub の公式イメージは amd64 専用のため、DGX-Spark では `exec format error` になります（ステップ 2.2 参照）。
 
 コンテナの中に入ったら：
 ```bash
-python -c "import torch; print(torch.cuda.is_available())"
-# → True
+python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+# → 2.x.x+... True NVIDIA GB10
 ```
 
 `exit` でコンテナから出る
@@ -138,8 +160,9 @@ my-docker-project/
 ### 4.2 Dockerfile の作成
 
 ```dockerfile
-# ベースイメージ（PyTorch + CUDA入り）
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+# ベースイメージ（PyTorch + CUDA入り、arm64 対応の NGC イメージ）
+# ※ pytorch/pytorch:... は amd64 専用なので DGX-Spark ではビルドできない
+FROM nvcr.io/nvidia/pytorch:25.09-py3
 
 # 作業ディレクトリの設定
 WORKDIR /app
@@ -171,6 +194,8 @@ docker build -t my-experiment:v1 .
 
 - `-t my-experiment:v1` : イメージに名前とバージョンをつける
 - `.` : 現在のディレクトリの Dockerfile を使う
+
+> ⚠️ ここで `exec format error` や `platform (linux/amd64) does not match ... (linux/arm64/v8)` が出た場合は、Dockerfile の `FROM` が `pytorch/pytorch:...` のままになっています。`FROM nvcr.io/nvidia/pytorch:25.09-py3` に直してください。
 
 ### 4.5 コンテナの実行
 
@@ -268,7 +293,7 @@ docker compose down
 
 ```dockerfile
 # 良い例：変わりにくいものを上に
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+FROM nvcr.io/nvidia/pytorch:25.09-py3
 WORKDIR /app
 
 # ① ライブラリ（あまり変わらない）→ キャッシュが効く
@@ -313,6 +338,8 @@ __pycache__/
 | エラー | 原因 | 対処 |
 |--------|------|------|
 | `permission denied` | Docker の権限がない | `sudo` を付ける or グループに追加 |
+| `exec /usr/bin/bash: exec format error` / `platform (linux/amd64) does not match ... (linux/arm64/v8)` | amd64 専用イメージを ARM64 の DGX-Spark で実行した | `pytorch/pytorch:...` ではなく `nvcr.io/nvidia/pytorch:25.09-py3` など arm64 対応イメージを使う（ステップ 2.2） |
+| `no kernel image is available for execution on the device` | PyTorch が GB10 (Blackwell, sm_121) 非対応 | 古い PyTorch を使っている。NGC の 25.09 以降のイメージを使う |
 | `CUDA error: no kernel image` | CUDAバージョン不一致 | ベースイメージのCUDAバージョンを確認 |
 | `no space left on device` | ディスク容量不足 | `docker system prune` で不要イメージ削除 |
 | `port is already allocated` | ポートが使用中 | 別のポート番号を指定 |
