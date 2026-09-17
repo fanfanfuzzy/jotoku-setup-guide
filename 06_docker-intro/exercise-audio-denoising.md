@@ -443,13 +443,39 @@ docker compose --profile training up train
 
 ### Challenge 2：VoiceBank-DEMAND データセットで学習
 
-公開データセットを使って本格的に学習してみましょう：
+公開データセット [VoiceBank-DEMAND](https://datashare.ed.ac.uk/handle/10283/2791) を使って本格的に学習してみましょう。
+
+> ⚠️ 公式 denoiser の学習スクリプト（`train.py` / `denoiser.audio`）は内部で `torchaudio.load` / `torchaudio.info` を使っており、この NGC イメージでは torchcodec が入らないため動きません。この演習の `train_denoise.py`（`soundfile` ベース）を拡張して学習しましょう。
 
 ```bash
-# VoiceBank-DEMAND データセットのダウンロード（公式 denoiser の手順）
-cd /workspace/denoiser
-# egs/valentini/conf.yml を編集してパスを設定
-python -m denoiser.audio dataset=valentini
+# ホスト側でダウンロード・展開して audio/ 以下に配置する例
+#   audio/voicebank/noisy_trainset_28spk_wav/*.wav
+#   audio/voicebank/clean_trainset_28spk_wav/*.wav
+ls /workspace/audio/voicebank/noisy_trainset_28spk_wav | head
+```
+
+`train_denoise.py` の `generate_pair()`（合成データ生成）を、`run_denoise.py` と同じ `load_wav()` で同名の noisy / clean ファイルペアを読み込む処理に置き換えます：
+
+```python
+import glob, random
+import soundfile as sf
+from denoiser.dsp import convert_audio
+
+def load_wav(path):
+    data, sr_file = sf.read(path, dtype="float32", always_2d=True)
+    return torch.from_numpy(data.T), sr_file
+
+noisy_files = sorted(glob.glob("/workspace/audio/voicebank/noisy_trainset_28spk_wav/*.wav"))
+
+def generate_pair(sr, duration):
+    noisy_path = random.choice(noisy_files)
+    clean_path = noisy_path.replace("noisy_trainset", "clean_trainset")
+    noisy, sr_file = load_wav(noisy_path)
+    clean, _ = load_wav(clean_path)
+    # VoiceBank は 48 kHz なのでモデルの 16 kHz に変換し、長さを揃える
+    noisy = convert_audio(noisy, sr_file, sr, model.chin)[:, : sr * duration]
+    clean = convert_audio(clean, sr_file, sr, model.chin)[:, : sr * duration]
+    return noisy.to(device), clean.to(device)
 ```
 
 ### Challenge 3：音質評価指標を計算
